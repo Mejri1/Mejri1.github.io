@@ -1,0 +1,9 @@
+{
+  "name": "Omar Mejri · AI & QA Engineer",
+  "short_name": "Omar Mejri",
+  "icons": [{ "src": "assets/img/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }],
+  "theme_color": "#0a0b0d",
+  "background_color": "#0a0b0d",
+  "display": "standalone",
+  "start_url": "./"
+}
