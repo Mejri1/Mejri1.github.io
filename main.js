@@ -99,7 +99,7 @@
     }
     const done = p > 0.985;
     specStatus.classList.toggle('is-done', done);
-    if (done) specName.textContent = '7 specs passed';
+    if (done) specName.textContent = '5 specs passed';
   }
   updateSpec();
   window.addEventListener('scroll', updateSpec, { passive: true });
@@ -123,27 +123,6 @@
     });
   }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
   $$('.reveal').forEach((el) => revealObs.observe(el));
-
-  /* ---------- Count-up metrics ---------- */
-  const countObs = new IntersectionObserver((entries) => {
-    entries.forEach((en) => {
-      if (!en.isIntersecting) return;
-      const el = en.target;
-      countObs.unobserve(el);
-      const target = parseFloat(el.dataset.count);
-      const dec = parseInt(el.dataset.decimals || '0', 10);
-      if (reduced) { el.textContent = target.toFixed(dec); return; }
-      const t0 = performance.now(), dur = 1400;
-      const step = (t) => {
-        const k = Math.min(1, (t - t0) / dur);
-        const e = 1 - Math.pow(1 - k, 4);
-        el.textContent = (target * e).toFixed(dec);
-        if (k < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
-    });
-  }, { threshold: 0.6 });
-  $$('[data-count]').forEach((el) => countObs.observe(el));
 
   /* ---------- Badge tilt ---------- */
   const badge = $('[data-tilt]');
@@ -365,20 +344,6 @@
   }
 
   /* =========================================================
-     Project filters
-     ========================================================= */
-  const filters = $$('.filter');
-  filters.forEach((f) => f.addEventListener('click', () => {
-    const cat = f.dataset.filter;
-    filters.forEach((x) => { const on = x === f; x.classList.toggle('is-active', on); x.setAttribute('aria-pressed', String(on)); });
-    $$('[data-projects] > [data-cat]').forEach((el) => {
-      const show = cat === 'all' || el.dataset.cat.split(' ').includes(cat);
-      el.classList.toggle('is-hidden', !show);
-      if (show) el.classList.add('is-in');
-    });
-  }));
-
-  /* =========================================================
      Project case studies (modal)
      ========================================================= */
   const GH = 'https://github.com/Mejri1/';
@@ -386,112 +351,54 @@
     spec2test: {
       meta: 'Talan Tunisia · Final-year engineering project · 02/2026 – 06/2026',
       title: 'Spec-to-Playwright AI platform',
-      lead: 'Writing E2E tests by hand is slow, and the specs they come from are already written in plain language. I built a platform that closes that gap: an LLM agent pipeline that reads natural-language specifications and produces executable Playwright tests.',
+      lead: 'Specs are already written in plain language. This platform turns them into executable Playwright tests.',
       stats: [['20.8×', 'faster test creation'], ['90%', 'pass rate on functional scenarios']],
       built: [
-        'An LLM agent pipeline that goes from spec analysis to test generation and execution.',
-        'Generated tests in Playwright (JavaScript) with Cucumber/Gherkin, so the requirement stays readable next to the code.',
-        'Adaptive element resolution, so tests stay robust when the UI changes.',
-        'Reusable test artifacts, execution reports and traces for every run.',
-        'LLM observability and traceability with Langfuse.',
+        'LLM agent pipeline: spec analysis → test generation → execution.',
+        'Playwright (JavaScript) + Cucumber/Gherkin output, so the requirement stays readable.',
+        'Adaptive element resolution to survive UI changes.',
+        'Reports, traces and Langfuse observability on every run.',
       ],
       stack: ['LLM agents', 'Playwright', 'JavaScript', 'Cucumber / Gherkin', 'Langfuse'],
       private: 'Built for Talan Tunisia. The source code is proprietary.',
     },
     selfheal: {
       meta: 'Open source · 2026',
-      title: 'Self-healing test validation system',
-      lead: 'A multi-agent system that validates web applications end to end without human intervention: it parses Gherkin, writes Selenium scripts, runs them in a real browser and repairs broken locators on the fly.',
+      title: 'Self-healing test validation',
+      lead: 'Gherkin in, Selenium scripts out, run in a real browser, with broken locators repaired on the fly.',
       built: [
-        'A LangGraph workflow of specialised agents: Explorer, Analyst, Script Writer, Executor, Self-Healer and Reporter.',
-        'The Explorer captures a screenshot and the page HTML and asks a vision-capable model for page intelligence (login forms, captcha, 2FA, uploads).',
-        'When a locator fails, the Self-Healer reads the live DOM, ranks three alternative locators, patches the script and re-runs it (up to three retries).',
-        'Self-contained HTML and JSON reports with a screenshot for every step.',
-        'Multi-provider LLM factory (Groq, Cerebras or a local LM Studio model), switchable from .env.',
+        'LangGraph agents: Explorer, Analyst, Script Writer, Executor, Self-Healer, Reporter.',
+        'On a failed locator, the Self-Healer reads the live DOM, ranks alternatives, patches and re-runs.',
+        'HTML/JSON reports with a screenshot per step.',
+        'Swappable LLM provider (Groq, Cerebras or local LM Studio).',
       ],
-      stack: ['Python', 'LangGraph', 'LangChain', 'Selenium 4', 'BeautifulSoup', 'Jinja2'],
+      stack: ['Python', 'LangGraph', 'Selenium 4', 'BeautifulSoup'],
       links: [['View on GitHub', GH + 'Functional-Test-Validation-System-']],
-    },
-    regression: {
-      meta: 'Talan Tunisia · Redion / Europ Assistance · 07/2026 – 10/2026',
-      title: 'Agentic regression-testing workflow',
-      lead: 'On an insurance web platform for Europ Assistance, I evaluated how far an agent framework could take a real test lifecycle, then designed a workflow to make agentic regression testing reusable across stacks.',
-      built: [
-        'Evaluated the BMad Method TEA agent framework across test design, ATDD, automation and review.',
-        'Automated E2E scenarios with Playwright, TypeScript and Cucumber (BDD) in a Page Object Model, using MCP Playwright.',
-        'Industrialised execution: Azure DevOps CI/CD pipelines with triggers, Dockerised runs and Allure reports.',
-        'Designed a stack-agnostic agentic regression-testing workflow that extends the agent’s capabilities.',
-      ],
-      stack: ['Playwright', 'TypeScript', 'Cucumber', 'MCP', 'BMad Method', 'Azure DevOps', 'Docker', 'Allure'],
-      private: 'Client work. The code and test assets belong to the client.',
     },
     contract: {
       meta: 'Open source · 2026',
       title: 'AI-assisted API contract testing',
-      lead: 'APIs evolve, and contract tests break for both good and bad reasons. This project lets an AI explain a failure, while deterministic guardrails decide whether a fix is safe to apply.',
+      lead: 'Contract tests break for good and bad reasons. An LLM explains the failure; deterministic rules decide if a fix is safe.',
       built: [
-        'A small FastAPI service and JSON contract tests that validate fields, types and enums.',
-        'An AI failure analyser that compares expected and actual payloads and proposes a structured fix.',
-        'A guardrail engine that only accepts safe, backward-compatible changes.',
-        'A self-repair step that updates a temporary copy of the contract and re-validates it.',
-        'Structured JSON logs of every failure, AI decision and repair outcome.',
+        'FastAPI service with JSON contract tests on fields, types and enums.',
+        'LLM failure analyser that proposes a structured fix.',
+        'Guardrails that only accept backward-compatible changes, then re-validate.',
+        'Structured JSON logs of every decision.',
       ],
-      stack: ['Python', 'FastAPI', 'pytest', 'LLM (LM Studio-ready)'],
+      stack: ['Python', 'FastAPI', 'pytest', 'LM Studio'],
       links: [['View on GitHub', GH + 'AI-test']],
     },
-    harmony: {
-      meta: 'Hydatis · AI & NLP internship · 06/2025 – 08/2025',
-      title: 'Harmony HR assistant',
-      lead: 'An AI assistant that helps startup employees with HR questions and concerns, grounded in company documents and aware of the conversation so far.',
-      built: [
-        'A LangChain conversational system with memory and summarisation.',
-        'A RAG pipeline (Firestore + ChromaDB) for context-aware answers.',
-        'Intent classification with RoBERTa to route between RAG and non-RAG answers.',
-        'Mistral 7B, RoBERTa and BART for multilingual (French and English) support and summarisation.',
-        'A Streamlit web app with Firebase authentication.',
-      ],
-      stack: ['Python', 'LangChain', 'ChromaDB', 'Firebase', 'Streamlit', 'Hugging Face Transformers'],
-      links: [['View on GitHub', GH + 'harmony-hr-assistant']],
-    },
-    talentmatch: {
-      meta: 'GitHub · 2025',
-      title: 'TalentMatch recruitment platform',
-      lead: 'A full-stack recruitment platform that matches job seekers to openings using NLP rather than keyword search.',
-      built: [
-        'Resume parsing that extracts skills, education and experience from PDF CVs, and strips personal details.',
-        'Semantic matching between resumes and job descriptions with sentence transformers and cosine similarity.',
-        'Technical quizzes generated from the job requirements, with real-time scoring.',
-        'Job posting management and application tracking on PostgreSQL.',
-        'A React + TypeScript front end with Tailwind CSS.',
-      ],
-      stack: ['Python', 'Flask', 'spaCy', 'Sentence Transformers', 'PostgreSQL', 'React', 'TypeScript'],
-      links: [['View on GitHub', GH + 'AI-powered-recruitment']],
-    },
     crew: {
-      meta: 'GitHub · 2025',
+      meta: 'Open source · 2025',
       title: 'Multi-agent data science crew',
-      lead: 'An agentic system that automates a first pass of data science work: from a business question and a CSV to a technical report.',
+      lead: 'From a business question and a CSV to a technical report.',
       built: [
-        'Four CrewAI agents: Project Planner, Data Analyst, Modelling Agent and Report Writer.',
-        'Custom tools for reading CSVs and computing dataset statistics.',
-        'A sequential workflow with context passed between agents.',
-        'LLaMA models via Hugging Face; the output is a structured Markdown report.',
+        'Four CrewAI agents: Planner, Data Analyst, Modeller, Report Writer.',
+        'Custom tools to read CSVs and compute dataset statistics.',
+        'LLaMA via Hugging Face; output is a Markdown report.',
       ],
       stack: ['Python', 'CrewAI', 'LLaMA', 'Hugging Face'],
       links: [['View on GitHub', GH + 'Agentic-IA']],
-    },
-    federated: {
-      meta: 'GitHub · 2025',
-      title: 'Federated learning for face recognition',
-      lead: 'Can you train a useful face recognition model without centralising anyone’s photos? This project compares three ways to find out.',
-      built: [
-        'Local training: an independent model per participant, on isolated data.',
-        'Centralised learning: one model trained on all the data pooled together.',
-        'Federated learning: distributed training with FedAvg parameter aggregation, no raw data shared.',
-        'A comparison of performance, privacy and communication cost in notebooks.',
-      ],
-      stack: ['Python', 'Jupyter', 'FedAvg'],
-      links: [['View on GitHub', GH + 'Federated-Learning']],
     },
   };
 
@@ -530,8 +437,8 @@
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-open-project]');
     if (b) { e.stopPropagation(); openProject(b.dataset.openProject); return; }
-    const card = e.target.closest('.card[data-project]');
-    if (card && !e.target.closest('a, button')) openProject(card.dataset.project);
+    const card = e.target.closest('[data-project]');
+    if (card && !e.target.closest('a, button, .runner')) openProject(card.dataset.project);
   });
   // Deep link: #project-<key>
   const deep = location.hash.match(/^#project-(\w+)/);
@@ -551,20 +458,18 @@
   const openUrl = (u) => () => window.open(u, '_blank', 'noopener');
 
   const COMMANDS = [
-    { g: 'Navigate', label: 'Approach: spec to test', icon: 'u-arrow', run: go('pipeline'), hint: '01' },
-    { g: 'Navigate', label: 'Experience', icon: 'u-arrow', run: go('experience'), hint: '02' },
-    { g: 'Navigate', label: 'Projects', icon: 'u-arrow', run: go('projects'), hint: '03' },
-    { g: 'Navigate', label: 'Stack', icon: 'u-arrow', run: go('stack'), hint: '04' },
-    { g: 'Navigate', label: 'Education & certifications', icon: 'u-arrow', run: go('education'), hint: '05' },
-    { g: 'Navigate', label: 'About', icon: 'u-arrow', run: go('about'), hint: '06' },
-    { g: 'Navigate', label: 'Contact', icon: 'u-arrow', run: go('contact'), hint: '07' },
+    { g: 'Navigate', label: 'Experience', icon: 'u-arrow', run: go('experience'), hint: '01' },
+    { g: 'Navigate', label: 'Projects', icon: 'u-arrow', run: go('projects'), hint: '02' },
+    { g: 'Navigate', label: 'Stack', icon: 'u-arrow', run: go('stack'), hint: '03' },
+    { g: 'Navigate', label: 'Education & certifications', icon: 'u-arrow', run: go('education'), hint: '04' },
+    { g: 'Navigate', label: 'Contact', icon: 'u-arrow', run: go('contact'), hint: '05' },
     { g: 'Actions', label: 'Download CV (PDF)', icon: 'u-download', run: () => { const a = document.createElement('a'); a.href = CV; a.download = 'Omar_Mejri_CV.pdf'; document.body.appendChild(a); a.click(); a.remove(); } },
     { g: 'Actions', label: 'Copy email address', icon: 'u-copy', run: () => copy(EMAIL), hint: EMAIL },
     { g: 'Actions', label: 'Write an email', icon: 'u-mail', run: () => { location.href = 'mailto:' + EMAIL; } },
     { g: 'Actions', label: 'Open LinkedIn', icon: 'u-linkedin', run: openUrl('https://www.linkedin.com/in/omar-mejri/') },
     { g: 'Actions', label: 'Open GitHub', icon: 'i-github', run: openUrl('https://github.com/Mejri1') },
     { g: 'Actions', label: 'Toggle light / dark theme', icon: 'u-sun', run: toggleTheme },
-    { g: 'Actions', label: 'Replay the spec-to-test demo', icon: 'u-replay', run: () => { go('pipeline')(); setTimeout(run, 500); } },
+    { g: 'Actions', label: 'Replay the spec-to-test demo', icon: 'u-replay', run: () => { go('projects')(); setTimeout(run, 500); } },
     ...Object.entries(PROJECTS).map(([k, p]) => ({ g: 'Projects', label: p.title, icon: 'u-arrow-up-right', run: () => openProject(k) })),
   ];
 
