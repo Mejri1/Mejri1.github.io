@@ -99,7 +99,7 @@
     }
     const done = p > 0.985;
     specStatus.classList.toggle('is-done', done);
-    if (done) specName.textContent = '5 specs passed';
+    if (done) specName.textContent = '6 specs passed';
   }
   updateSpec();
   window.addEventListener('scroll', updateSpec, { passive: true });
@@ -344,6 +344,269 @@
   }
 
   /* =========================================================
+     Mission simulations (Redion · Upcoop)
+     ========================================================= */
+  const sim = $('[data-sim]');
+  let playSim = () => {};
+  if (sim) {
+    const sStages = $('[data-sim-stages]', sim);
+    const L = $('[data-sim-left]', sim);
+    const R = $('[data-sim-right]', sim);
+    const lTab = $('[data-sim-ltab]', sim);
+    const rTab = $('[data-sim-rtab]', sim);
+    const tabs = $$('[data-sim-tab]', sim);
+    let simId = 0;
+    let current = 'redion';
+
+    const sw = (ms, id) => new Promise((res, rej) => setTimeout(() => (id === simId ? res() : rej('cancel')), reduced ? 0 : ms));
+    function sStage(i, state) {
+      $$('li', sStages).forEach((li, j) => {
+        li.classList.remove('is-active', 'is-heal');
+        li.classList.toggle('is-done', j < i);
+      });
+      const li = $$('li', sStages)[i];
+      if (li) li.classList.add(state === 'bad' ? 'is-heal' : 'is-active');
+    }
+    const chip = (k, t) => '<span class="st-chip st-chip--' + k + '">' + t + '</span>';
+
+    /* ----- Redion: BMad TEA + MCP Playwright -> Azure DevOps ----- */
+    const ADO =
+      '<div class="ado">' +
+        '<div class="ado__head"><img src="assets/tech/azuredevops.svg" alt="" width="18" height="18"><b>e2e-regression</b><span class="ado__trig" data-ado-trig>waiting for trigger</span></div>' +
+        '<ol class="ado__jobs">' +
+          '<li data-job><i class="ado__st"></i><div><b>Build</b><small>docker build · Playwright image</small></div><time></time></li>' +
+          '<li data-job><i class="ado__st"></i><div><b>Test</b><small>cucumber-js --tags @regression</small></div><time></time></li>' +
+          '<li data-job><i class="ado__st"></i><div><b>Publish</b><small>Allure report → artifacts</small></div><time></time></li>' +
+        '</ol>' +
+        '<div class="ado__report" data-ado-report>' +
+          '<div class="ado__bar"><i data-ado-pass></i></div>' +
+          '<div class="ado__sum"><span data-ado-count>0 / 6 scenarios</span><span>Allure</span></div>' +
+        '</div>' +
+        '<div class="ado__triggers"><span>trigger: PR → develop</span><span>schedule: nightly</span></div>' +
+      '</div>';
+
+    const SIMS = {
+      redion: {
+        stages: ['Story', 'Test design', 'ATDD', 'Automate', 'Review', 'Pipeline'],
+        ltab: '<span class="tag tag--ts">agent</span> BMad TEA · MCP Playwright',
+        rtab: '<span class="tag tag--term">ADO</span> Azure Pipelines',
+        build() { L.innerHTML = '<pre class="code" data-log></pre>'; R.innerHTML = ADO; },
+        async play(id) {
+          const log = $('[data-log]', L);
+          const w = (ms) => sw(ms, id);
+          const say = async (html, ms) => { addLine(log, html); await w(ms == null ? 420 : ms); };
+          const cmd = (c, note) => T('dim', '$ ') + T('fn', c) + (note ? T('dim', '  · ' + note) : '');
+
+          sStage(0);
+          await say(T('cm', '# user story'), 200);
+          await say(T('str', 'As a policyholder, I can submit an assistance request online.'), 800);
+
+          sStage(1);
+          await say(cmd('*test-design', 'TEA agent'), 500);
+          await say(T('warn', '›') + ' risk-based coverage: happy path, missing fields, invalid dates', 650);
+          await say(T('ok', '✓') + ' 6 scenarios, prioritised P0 → P2', 550);
+
+          sStage(2);
+          await say(cmd('*atdd'), 450);
+          await say(T('gk', 'Scenario:') + ' Submit a request with valid details', 240);
+          await say('  ' + T('gk', 'Given') + ' I am on the new request page', 200);
+          await say('  ' + T('gk', 'When') + ' I fill in the trip details and submit', 200);
+          await say('  ' + T('gk', 'Then') + ' I see the request confirmation', 450);
+          await say(T('ok', '✓') + ' features/assistance_request.feature', 550);
+
+          sStage(3);
+          await say(cmd('*automate', 'MCP Playwright'), 450);
+          await say(T('kw', 'mcp') + ' › browser_navigate ' + T('str', '/requests/new'), 380);
+          await say(T('kw', 'mcp') + ' › browser_snapshot' + T('dim', '  element refs resolved'), 380);
+          await say(T('kw', 'mcp') + ' › browser_fill_form' + T('dim', '  4 fields'), 380);
+          await say(T('kw', 'mcp') + ' › browser_click ' + T('str', '"Submit"'), 380);
+          await say(T('ok', '✓') + ' pages/RequestPage.ts · steps/request.steps.ts', 600);
+
+          sStage(4);
+          await say(cmd('*test-review'), 450);
+          await say(T('ok', '✓') + ' Page Objects · no hard waits · tagged @regression', 500);
+          await say(T('dim', '$ ') + 'git push → pull request into develop', 500);
+
+          sStage(5);
+          const trig = $('[data-ado-trig]', R);
+          trig.textContent = 'triggered by PR';
+          trig.classList.add('is-on');
+          const jobs = $$('[data-job]', R);
+          const time = (i, t) => { $('time', jobs[i]).textContent = t; };
+          await say(T('warn', '›') + ' Azure Pipelines: e2e-regression queued', 350);
+
+          jobs[0].classList.add('is-run'); await w(1100);
+          jobs[0].classList.replace('is-run', 'is-ok'); time(0, '48s');
+
+          jobs[1].classList.add('is-run');
+          $('[data-ado-report]', R).classList.add('is-on');
+          const bar = $('[data-ado-pass]', R), cnt = $('[data-ado-count]', R);
+          for (let k = 1; k <= 6; k++) {
+            await w(420);
+            bar.style.width = (k / 6 * 100) + '%';
+            cnt.textContent = k + ' / 6 scenarios passed';
+          }
+          jobs[1].classList.replace('is-run', 'is-ok'); time(1, '3m 12s');
+
+          jobs[2].classList.add('is-run'); await w(800);
+          jobs[2].classList.replace('is-run', 'is-ok'); time(2, '21s');
+          await say(T('ok', '✓') + ' pipeline succeeded · Allure report published', 200);
+        },
+      },
+
+      /* ----- Upcoop: manual QA -> bug -> AI drafts -> Appium ----- */
+      upcoop: {
+        stages: ['Story', 'Test cases', 'Manual run', 'Bug', 'AI draft', 'Appium'],
+        ltab: '<span class="tag tag--gherkin">QA</span> test cases',
+        rtab: '<span class="tag tag--term">apk</span> mobile app · Android',
+        build() {
+          L.innerHTML = '<div class="tc"><table><thead><tr><th>ID</th><th>Case</th><th>Status</th></tr></thead><tbody data-tc></tbody></table><div class="tc__extra" data-tc-extra></div></div>';
+          R.innerHTML =
+            '<div class="mob">' +
+              '<div class="phone"><div class="phone__screen" data-screen></div><span class="phone__tap" data-tap></span></div>' +
+              '<div class="mob__side"><span class="mob__mode" data-mode>idle</span><pre class="code code--term" data-mlog></pre></div>' +
+            '</div>';
+          $('[data-screen]', R).innerHTML = SCREENS.login({});
+        },
+        async play(id) {
+          const w = (ms) => sw(ms, id);
+          const wrap = $('.tc', L), tb = $('[data-tc]', L), extra = $('[data-tc-extra]', L);
+          const scr = $('[data-screen]', R), tapEl = $('[data-tap]', R), mode = $('[data-mode]', R), mlog = $('[data-mlog]', R);
+          const phone = $('.phone', R);
+          const show = (name, o) => { scr.innerHTML = SCREENS[name](o || {}); };
+          const row = (rid, txt, st) => {
+            const tr = document.createElement('tr');
+            tr.dataset.id = rid;
+            tr.innerHTML = '<td>' + rid + '</td><td>' + esc(txt) + '</td><td data-st>' + st + '</td>';
+            tb.appendChild(tr);
+            wrap.scrollTop = wrap.scrollHeight;
+          };
+          const setSt = (rid, html) => { const c = tb.querySelector('tr[data-id="' + rid + '"] [data-st]'); if (c) c.innerHTML = html; };
+          const note = (cls, label, html) => {
+            const d = document.createElement('div');
+            d.className = 'note-card note-card--' + cls;
+            d.innerHTML = '<small>' + label + '</small>' + html;
+            extra.appendChild(d);
+            wrap.scrollTop = wrap.scrollHeight;
+          };
+          const tap = async (sel) => {
+            const t = scr.querySelector(sel);
+            if (t) {
+              const pr = phone.getBoundingClientRect(), r = t.getBoundingClientRect();
+              tapEl.style.left = (r.left + r.width / 2 - pr.left) + 'px';
+              tapEl.style.top = (r.top + r.height / 2 - pr.top) + 'px';
+              tapEl.classList.remove('is-on'); void tapEl.offsetWidth; tapEl.classList.add('is-on');
+            }
+            await w(380);
+          };
+          const ml = async (html, ms) => { addLine(mlog, html); await w(ms == null ? 260 : ms); };
+          const OK = '<div class="msg msg--ok">Payment accepted</div>';
+          const passAuto = chip('pass', 'pass') + chip('auto', 'auto');
+
+          sStage(0);
+          note('story', 'User story', 'As a beneficiary, I pay a merchant with my meal voucher.');
+          await w(1000);
+
+          sStage(1);
+          const cases = [['TC-01', 'Log in with a valid PIN'], ['TC-02', 'Balance shown after login'], ['TC-03', 'Pay within the balance'], ['TC-04', 'Pay above the balance shows an error']];
+          for (const [rid, t] of cases) { row(rid, t, chip('todo', 'to run')); await w(320); }
+          await w(300);
+
+          sStage(2);
+          mode.textContent = 'manual run'; mode.className = 'mob__mode is-manual';
+          setSt('TC-01', chip('run', 'running'));
+          for (let p = 1; p <= 4; p++) { show('login', { pin: p }); await w(170); }
+          await tap('[data-t=login]'); show('home'); await w(500);
+          setSt('TC-01', chip('pass', 'pass')); setSt('TC-02', chip('pass', 'pass')); await w(300);
+          setSt('TC-03', chip('run', 'running'));
+          await tap('[data-t=pay]'); show('pay'); await w(300);
+          show('pay', { amt: '30.00' }); await w(350);
+          await tap('[data-t=confirm]'); show('pay', { amt: '30.00', msg: OK }); await w(550);
+          setSt('TC-03', chip('pass', 'pass'));
+          show('home', { bal: '12.00' }); await w(450);
+          setSt('TC-04', chip('run', 'running'));
+          await tap('[data-t=pay]'); show('pay'); await w(250);
+          show('pay', { amt: '60.00' }); await w(350);
+          await tap('[data-t=confirm]'); await w(250);
+          await tap('[data-t=confirm]'); await w(450);
+
+          sStage(3, 'bad');
+          setSt('TC-04', chip('fail', 'fail'));
+          note('bug', 'Bug · Jira', 'No error message when the amount exceeds the balance.<span>Major · steps + screen recording attached</span>');
+          await w(1200);
+
+          sStage(4);
+          note('ai', 'AI testing agent · PoC', 'Drafted 3 more cases from the user story.');
+          await w(500);
+          const ai = [['TC-05', 'Pay exactly the full balance'], ['TC-06', 'Pay with an expired voucher'], ['TC-07', 'Network loss during payment']];
+          for (const [rid, t] of ai) { row(rid, t, chip('ai', 'AI draft')); await w(320); }
+          await w(400);
+          for (const [rid] of ai) { setSt(rid, chip('todo', 'reviewed')); await w(200); }
+
+          sStage(5);
+          mode.textContent = 'Appium · UiAutomator2'; mode.className = 'mob__mode is-auto';
+          show('login');
+          await ml(T('dim', '$ ') + 'appium session · Android emulator', 450);
+          await ml(T('fn', 'setValue') + ' ~pin_input ' + T('str', '"••••"'), 120);
+          for (let p = 1; p <= 4; p++) { show('login', { pin: p }); await w(80); }
+          await ml(T('fn', 'tap') + ' ~login_button', 60); await tap('[data-t=login]'); show('home');
+          await ml(T('fn', 'expect') + ' ~balance ' + T('dim', 'toBeDisplayed'), 200);
+          setSt('TC-01', passAuto); setSt('TC-02', passAuto);
+          await ml(T('ok', '✓') + ' TC-01 · TC-02', 250);
+          await ml(T('fn', 'tap') + ' ~pay_button', 60); await tap('[data-t=pay]'); show('pay', { amt: '30.00' });
+          await ml(T('fn', 'tap') + ' ~confirm_button', 60); await tap('[data-t=confirm]'); show('pay', { amt: '30.00', msg: OK });
+          setSt('TC-03', passAuto);
+          await ml(T('ok', '✓') + ' TC-03', 350);
+          await ml(T('dim', 'UiPath: same flow prototyped as a mobile automation'), 350);
+          addLine(mlog, '<span class="sum">' + T('ok', '3 cases automated') + T('dim', ' · TC-04 waits for the fix') + '</span>');
+        },
+      },
+    };
+
+    const SCREENS = {
+      login: (o) => '<div class="scr"><small class="scr__app">Voucher wallet</small><h5>Enter your PIN</h5><div class="pin">' +
+        [0, 1, 2, 3].map((i) => '<i' + (i < (o.pin || 0) ? ' class="on"' : '') + '></i>').join('') +
+        '</div><div class="scr__btn" data-t="login">Log in</div></div>',
+      home: (o) => '<div class="scr"><small class="scr__app">Voucher wallet</small><h5>My vouchers</h5>' +
+        '<div class="vcard"><small>Meal voucher</small><b>' + (o.bal || '42.00') + ' TND</b></div>' +
+        '<div class="row2"><div class="scr__btn" data-t="pay">Pay</div><div class="scr__ghost">History</div></div></div>',
+      pay: (o) => '<div class="scr"><small class="scr__app">Pay a merchant</small><h5>Amount</h5>' +
+        '<div class="field">' + (o.amt ? o.amt : '<span class="ph">0.00</span>') + ' TND</div>' + (o.msg || '') +
+        '<div class="scr__btn" data-t="confirm">Confirm</div></div>',
+    };
+
+    function load(key) {
+      simId++;
+      current = key;
+      tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.simTab === key)));
+      const s = SIMS[key];
+      sStages.innerHTML = s.stages.map((n) => '<li><span class="st"></span>' + n + '</li>').join('');
+      lTab.innerHTML = s.ltab;
+      rTab.innerHTML = s.rtab;
+      s.build();
+    }
+    async function start() {
+      const id = ++simId;
+      SIMS[current].build();
+      $$('li', sStages).forEach((li) => li.classList.remove('is-done', 'is-active', 'is-heal'));
+      try {
+        await SIMS[current].play(id);
+        $$('li', sStages).forEach((li) => { li.classList.remove('is-active', 'is-heal'); li.classList.add('is-done'); });
+      } catch (e) { /* cancelled */ }
+      if (id === simId) $$('.caret', sim).forEach((c) => c.remove());
+    }
+    playSim = (key) => { if (key && key !== current) load(key); start(); };
+
+    tabs.forEach((t) => t.addEventListener('click', () => { simObs.disconnect(); load(t.dataset.simTab); start(); }));
+    $('[data-sim-play]', sim).addEventListener('click', () => { simObs.disconnect(); start(); });
+    load('redion');
+    const simObs = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) { simObs.disconnect(); start(); }
+    }, { threshold: 0.35 });
+    simObs.observe(sim);
+  }
+
+  /* =========================================================
      Project case studies (modal)
      ========================================================= */
   const GH = 'https://github.com/Mejri1/';
@@ -459,16 +722,19 @@
 
   const COMMANDS = [
     { g: 'Navigate', label: 'Experience', icon: 'u-arrow', run: go('experience'), hint: '01' },
-    { g: 'Navigate', label: 'Projects', icon: 'u-arrow', run: go('projects'), hint: '02' },
-    { g: 'Navigate', label: 'Stack', icon: 'u-arrow', run: go('stack'), hint: '03' },
-    { g: 'Navigate', label: 'Education & certifications', icon: 'u-arrow', run: go('education'), hint: '04' },
-    { g: 'Navigate', label: 'Contact', icon: 'u-arrow', run: go('contact'), hint: '05' },
+    { g: 'Navigate', label: 'Missions', icon: 'u-arrow', run: go('missions'), hint: '02' },
+    { g: 'Navigate', label: 'Projects', icon: 'u-arrow', run: go('projects'), hint: '03' },
+    { g: 'Navigate', label: 'Stack', icon: 'u-arrow', run: go('stack'), hint: '04' },
+    { g: 'Navigate', label: 'Education & certifications', icon: 'u-arrow', run: go('education'), hint: '05' },
+    { g: 'Navigate', label: 'Contact', icon: 'u-arrow', run: go('contact'), hint: '06' },
     { g: 'Actions', label: 'Download CV (PDF)', icon: 'u-download', run: () => { const a = document.createElement('a'); a.href = CV; a.download = 'Omar_Mejri_CV.pdf'; document.body.appendChild(a); a.click(); a.remove(); } },
     { g: 'Actions', label: 'Copy email address', icon: 'u-copy', run: () => copy(EMAIL), hint: EMAIL },
     { g: 'Actions', label: 'Write an email', icon: 'u-mail', run: () => { location.href = 'mailto:' + EMAIL; } },
     { g: 'Actions', label: 'Open LinkedIn', icon: 'u-linkedin', run: openUrl('https://www.linkedin.com/in/omar-mejri/') },
     { g: 'Actions', label: 'Open GitHub', icon: 'i-github', run: openUrl('https://github.com/Mejri1') },
     { g: 'Actions', label: 'Toggle light / dark theme', icon: 'u-sun', run: toggleTheme },
+    { g: 'Actions', label: 'Play the Redion mission (Azure DevOps)', icon: 'u-replay', run: () => { go('missions')(); setTimeout(() => playSim('redion'), 500); } },
+    { g: 'Actions', label: 'Play the Upcoop mission (Appium)', icon: 'u-replay', run: () => { go('missions')(); setTimeout(() => playSim('upcoop'), 500); } },
     { g: 'Actions', label: 'Replay the spec-to-test demo', icon: 'u-replay', run: () => { go('projects')(); setTimeout(run, 500); } },
     ...Object.entries(PROJECTS).map(([k, p]) => ({ g: 'Projects', label: p.title, icon: 'u-arrow-up-right', run: () => openProject(k) })),
   ];
